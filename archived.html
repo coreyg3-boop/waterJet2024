@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-1Og1oOsSrIKsXSMP9xXxKdyZ/SDv6ngLsybsGxc8IGE='; style-src 'self' 'unsafe-inline'"> -->
+    <meta http-equiv="Content-Security-Policy" content="style-src 'self' 'unsafe-inline';">
+    <link href="./styles.css" rel="stylesheet">
+    <link href="./css/bulma.css" rel="stylesheet">
+    <title>Hello World!</title>
+    <style>
+      #cad-view {
+        display: inline-block;
+        margin: 10px 0;
+        /*			border: 1px solid #666;*/
+    }
+    #cad-view > canvas {
+        border: 1px solid #666;
+    }
+    .revise-modal-container {
+      position: fixed;
+      background: rgba(0,0,0,0.8);
+      width: 100vw;
+      height: 100%;
+      overflow-y: hidden;
+    }
+    .revise-modal {
+      position: relative;
+      background: rgba(255,255,255,1);
+      width: 50vw;
+      height: 90vh;
+      left: 25vw;
+      top: 5vh;
+      padding: 5em 2.5em;
+      overflow-y: scroll;
+    }
+    .revise-modal .input-set {
+      clear: both;
+      display: block;
+      position: relative;
+      margin: 1em;
+    }
+
+    button.close-button {
+      position: absolute;
+      top: 1em;
+      right: 1em;
+      background: rgba(255,0,0,1);
+      color: rgba(255,255,255,1);
+      border-radius: 15px;
+      width: 30px;
+      height: 30px;
+      font-size: 1em;
+      line-height: 24px;
+    }
+
+    button.is-info.active-revive {
+      background-color: rgb(62, 197, 62);
+    }
+
+    button.is-info.active-revive:hover {
+      background-color: rgb(42, 224, 42);
+    }
+
+    .animating-hold:before {
+      content: '';
+      background-color: rgba(42, 224, 42, 0.5);
+      top: 0;
+      left: 0;
+      position: absolute;
+      height: 100%;
+      width: 1%;
+      animation: buttonHold 3s forwards;
+    }
+
+    @keyframes buttonHold {
+      from {
+        width: 1%;
+      }
+      to {
+        width: 100%
+      }
+    }
+
+    </style>
+  </head>
+  <body>
+    <div id="window-container">
+      <nav>
+        <div id="nav-container">
+          <a href="./index.html"><button>Home</button></a>
+          <a href="./newProject.html"><button>New Project</button></a>
+          <a href="./pending.html"><button>Pending</button></a>
+          <a href="./inProgress.html"><button>In Progress</button></a>
+          <a href="./completed.html"><button>Completed</button></a>
+          <a href="./archived.html"><button class="active">Archived</button></a>
+          <a href="./onHold.html"><button>On Hold</button></a>
+          <a href="./settings.html"><button class="sit-bottom">Settings</button></a>
+        </div>
+      </nav>
+      <div id="content-container">
+        <h1>Archived</h1>
+        We are using Node.js <span id="node-version"></span>,
+        Chromium <span id="chrome-version"></span>,
+        and Electron <span id="electron-version"></span>.
+        <a href="./completed.html"><button>Completed</button></a>
+      </div>
+
+      <div id="cad-view" tagging-label="false">
+
+      </div>
+      <div id="dxf-content-container" tagging-label="false">
+          <pre id="dxf-content" tagging-label="false">
+  
+          </pre>
+      </div>
+
+      <div id="svg"></div>
+
+      <div class="svg-to-img"></div>
+
+    </div>
+
+    <script src="./db-utils.js" type="module" content="script-src 'sha256-1Og1oOsSrIKsXSMP9xXxKdyZ/SDv6ngLsybsGxc8IGE='"></script>
+
+    <script type="module">
+      import * as dbStuff from './db-utils.js';
+
+      const electron = window.require('electron');
+      const { shell, ipcMain } = electron;
+
+      const content = document.querySelector('#content-container');
+
+      const dbPromise = new Promise((resolve, reject) => {
+        const dbread = dbStuff.dbStuff('read', null, 'archived');
+        //const dbread = dbStuff.showProjects('archived');
+        resolve(dbread);
+      });
+
+      const moveToPending = (projectCard) => {
+        const client = projectCard.querySelector('.client').textContent;
+        const project = projectCard.querySelector('.project').textContent;
+
+        dbStuff.moveDir('archived', client, project);
+      }
+
+      const addReviveLink = (projectCard) => {
+        const reviveButton = document.querySelector('button.active-revive');
+
+        console.log(projectCard);
+
+        reviveButton.addEventListener('click', () => {
+          dbStuff.updateStatus(projectCard.dataset.id, 'archived');
+          moveToPending(projectCard);
+        });
+      };
+
+      const makeCard = (project) => {
+        const card = document.createElement('div');
+          card.classList.add('card');
+          card.dataset.id = project.id;
+
+        let id;
+        let holdCount = 0;
+
+        const holdDownCount = () => {
+          console.log(event);
+          console.log(event.target.parentElement);
+          event.target.classList.add('animating-hold');
+          id = setInterval(() => {
+            holdCount += 1;
+          }, 25)
+        }
+
+        const holdDownCountRelease = () => {
+          clearInterval(id);
+
+          event.target.classList.remove('animating-hold');
+          
+          if (holdCount >= 100) {
+            console.log('heldFor3');
+            button.removeEventListener('mousedown', holdDownCount, true);
+            button.removeEventListener('mouseup', holdDownCountRelease, true);
+
+            event.target.classList.add('active-revive');
+            button.textContent = "Revive Project";
+
+            setTimeout( () => {
+              addReviveLink(card);
+            }, 100);
+
+          } else {
+            holdCount = 0;
+          }
+          console.log('holdCount = ' + holdCount);
+          console.log("released...");
+          //addReviveLink(event.target);
+          //event.target.setAttribute('disabled', 'enabled')
+        }
+
+        const button = document.createElement('button');
+          button.classList.add('archived-button');
+          button.classList.add('button');
+          button.classList.add('is-info');
+          //button.setAttribute('disabled', 'disabled');
+          button.textContent = "Hold To Revive Project";
+
+          button.addEventListener('mousedown', holdDownCount, true);
+          button.addEventListener('mouseup', holdDownCountRelease, true);
+            
+
+            // if (event.type == 'mousedown') {
+            //   console.log('downdowndown');
+            // }
+
+            // const thisCard = event.target.parentElement;
+            // console.log(thisCard.dataset.id);
+            // dbStuff.updateStatus(thisCard.dataset.id, 'archived');
+            // moveToArchived(thisCard);
+            // thisCard.remove();
+          //});
+
+        const cardContent = `<div class="card-content">
+                        <p class="client">${project.client_name}</p>
+                        <p class="project">${project.project_name}</p>
+                        <p class="status">${project.status}</p>
+                        <p class="details-button">Show Details</p>
+                        <div class="details-panel">
+                        <p><span>${project.thickness} </span><span>${project.unit} - </span><span>${project.material}</span></p>
+                        <p>Quantity: ${project.quantity}</p>
+                        <p>Cut Time: ${project.cut_time} mins</p>
+                        <p>Comments: ${project.comments}</p>
+                        <hr/>
+                        <p>${
+                          (function() {
+                            const projectFiles = project.files.split(',');
+                            let projectFileSpans = '';
+                            projectFiles.forEach((item, index) => {
+                              projectFileSpans += '<span class="project-file" data-file-name="' + item + '">' + item + '</span><br/>'
+                            });
+                            return projectFileSpans;
+                          })()
+                        }</p>
+                        <button>Preview Files</button>
+                        <br/>
+                        <br/>
+                        <hr/>
+                        <p><input name="revise" id="revise" type="checkbox"><label for="revise">Revise Project</label></p>
+                        </div>
+                        </div>`;
+
+        card.insertAdjacentHTML("beforeend", cardContent);
+
+        const fileNames = card.querySelectorAll('span.project-file');
+        const detailsButton = card.querySelector('p.details-button');
+        const details = card.querySelector('div.details-panel');
+        const svgElem = document.querySelector('#svg');
+        const svgToImg = document.querySelector('.svg-to-img');
+        const revise = card.querySelector('#revise');
+
+        revise.addEventListener('change', function(e) {
+          if (e.target.checked) {
+            showProjectModal(card, project);
+          } else {
+            console.log('naqdda');
+          }
+        })
+
+        detailsButton.addEventListener('click', function(evt) {
+          let show;
+          (evt.target.textContent.includes('Show')) ? show = false : show = true;
+          const act = show ? 'Show' : 'Hide'
+          evt.target.textContent = act + " Details";
+          evt.target.classList.toggle('hidden');
+          details.classList.toggle('visible');
+          if (details.style.maxHeight) {
+            details.style.maxHeight = null;
+          } else {
+            details.style.maxHeight = details.scrollHeight + "px";
+          } 
+        });
+
+        fileNames.forEach((fileName) => {
+          const cadView = document.getElementById('cad-view');
+          const dxfContent = document.getElementById('dxf-content');
+          console.log(cadView)
+          fileName.addEventListener('click', function() {
+            const filePath = 'X:\\waterjetDashboard\\archived\\' + project.client_name + '\\' + project.project_name + '\\' +fileName.dataset.fileName;
+            dbStuff.dxfHandle(filePath, project.files, cadView, dxfContent);
+            dbStuff.dxfImgPreview(filePath, svgElem, svgToImg, content);
+            //shell.openPath('X:\\waterjetDashboard\\archived\\' + project.client_name + '\\' + project.project_name + '\\' +fileName.dataset.fileName);
+            // dialog.showOpenDialog(mainWindow, {
+            //   properties: ['openFile', 'openDirectory']
+            // })
+            // ipcMain.handle("showDialog", (e, message) => {
+            //   dialog.showMessageBox(mainWindow, { message });
+            // });
+          })
+        })
+
+        card.appendChild(button);
+        content.appendChild(card);
+      }
+
+      const closeModal = () => {
+        const revisionModal = document.querySelector('#window-container div.revise-modal-container');
+        revisionModal.remove();
+      }
+
+      const showProjectModal = (projectCard, project) => {
+        const windowContainer = document.querySelector('#window-container');
+        const reviseModalContainer = document.createElement('div');
+        reviseModalContainer.classList.add('revise-modal-container');
+        let drawingRevised = false;
+
+        const fileList = project.files.split(',');
+
+        const getFileListing = (fileList) => {
+          let fileListing = '';
+          let fileImg = '';
+          fileList.forEach((file) => {
+            console.log(file);
+            fileImg = file.replace('.dxf', '.svg');
+            const fileImgPath = 'X:\\waterjetDashboard\\archived\\' + project.client_name + '\\' + project.project_name + '\\' + fileImg;
+            const fileDXFPath = 'X:\\waterjetDashboard\\archived\\' + project.client_name + '\\' + project.project_name + '\\' + file;
+            fileListing += `<p>${file}</p><button class="revise-this-drawing" data-path="${fileDXFPath}">Revise Drawing File</button><br/><img src='${fileImgPath}' alt="${file}" style="width:300px; height: 300px;"><hr/>`;
+            console.log(fileListing);
+          });
+          return fileListing;
+        }
+
+        console.log(getFileListing(fileList));
+
+        const reviseModal = `
+        <div class="revise-modal">
+          <button class="close-button">X</button>
+          <div class="input-set">
+            <label for="material">Selected Material:<br/>
+              <input type="text" disabled value="${project.material}" name="material" /><button class="revise-item">Rev</button>
+            </label>
+          </div>
+          <div class="input-set">
+            <label for="thickness">Selected Thickness:<br/>
+              <input type="number" step="0.001" min="0" disabled value="${project.thickness}" name="thickness" /> <button class="revise-item">Rev</button>
+            </label>
+          </div>
+          <div class="input-set">
+            <label for="unit">Selected Unit:<br/>
+              <input type="text" disabled value="${project.unit}" name="unit" /><button class="revise-item">Rev</button>
+            </label>
+          </div>
+          <div class="input-set">
+            <label for="quantity">Selected Quantity:<br/>
+              <input type="number" disabled value="${project.quantity}" name="quantity" /> <button class="revise-item">Rev</button>
+            </label>
+          </div>
+          <div class="input-set">
+            <label for="comments">Project Comments:<br/>
+              <input type="text" disabled value="${project.comments}" name="comments" /><button class="revise-item">Rev</button>
+            </label>
+          </div>
+          <div class="input-set">
+            <p>Selected Files:</p>
+            ${getFileListing(fileList)}
+          </div>
+          <hr/>
+          <button>Add File</button>
+          <hr/>
+          <button class="save-project-revisions">Save Project Revisions</button>
+        </div>
+          ` 
+
+        //reviseModal.appendChild(inputSet);
+
+        // reviseModal.appendChild(inputQuantity);
+        // reviseModal.appendChild(inputQuantityLabel);
+        // reviseModal.appendChild(inputThickness);
+        // reviseModal.appendChild(inputThicknessLabel);
+        // reviseModal.appendChild(inputComments);
+        // reviseModal.appendChild(inputCommentsLabel);
+
+        reviseModalContainer.innerHTML = reviseModal;
+
+        windowContainer.appendChild(reviseModalContainer);
+
+        const closeRevisionModal = reviseModalContainer.querySelector('button.close-button');
+        const saveProjectRevisions = reviseModalContainer.querySelector('button.save-project-revisions');
+        const makeProjectRevision = reviseModalContainer.querySelectorAll('button.revise-item');
+        const revisionsArr = [];
+
+        closeRevisionModal.addEventListener('click', (e) => {
+          closeModal();
+        })
+
+        const writeRevisionsToSessionStorage = (revItem, revVal, proj) => {
+          console.log(revItem);
+          console.log(proj);
+          window.sessionStorage.revisions = JSON.stringify(proj);
+
+          console.log(window.sessionStorage.getItem('revisions'))
+          console.log(JSON.parse(window.sessionStorage.getItem('revisions')))
+          
+          console.log(revVal);
+        }
+
+        makeProjectRevision.forEach((button) => {
+          button.previousElementSibling.addEventListener('change', (e) => {
+            const revItem = e.target.getAttribute("name");
+            const revVal = e.target.value;
+            //const rev = [];
+            //revisionsArr.push([]);
+            project[revItem] = revVal;
+            
+            
+            writeRevisionsToSessionStorage(revItem, revVal, project);
+            //window.sessionStorage.setItem('revisions', rev);
+            //window.sessionStorage.setItem('revised-' + e.target.getAttribute("name"), e.target.value);
+            //revisionsArr.push(rev);
+          })
+
+          button.addEventListener('click', (e) => {
+            e.target.previousElementSibling.disabled = false;
+          });
+        })
+        saveProjectRevisions.addEventListener('click', (e) => {
+          updateProjectWithRevisions(project, reviseModalContainer);
+          closeModal();
+          setTimeout(() => {
+            window.location.reload()
+          },100);
+        })
+        drawingRevised = true;
+
+        const reviseDrawingButtons = reviseModalContainer.querySelectorAll('button.revise-this-drawing');
+
+        reviseDrawingButtons.forEach((button) => {
+          button.addEventListener('click', (e) => {
+            shell.openPath(e.target.dataset.path);
+          })
+          drawingRevised = true;
+        })
+      }
+
+      const updateProjectWithRevisions = (revisedProject, rmc) => {
+        const rmcInputs = rmc.querySelectorAll('.input-set input');
+        const revisedProjectSessionStorageJSON = JSON.parse(window.sessionStorage.getItem('revisions'));
+
+        const formToDB = new Promise((resolve, reject) => {
+          resolve(
+            dbStuff.reviseProject(revisedProjectSessionStorageJSON)
+          );
+        });
+
+        formToDB.then(() => {
+          //dbStuff.createDir(clientDir, projectDir, selFiles, flatProjectFile);
+        })
+    }
+
+      const populateWithArchived = (archivedProjects) => {
+        console.log(archivedProjects);
+        archivedProjects.forEach((project) => {
+          makeCard(project);
+        })
+      }
+
+      dbPromise.then(
+        setTimeout(function() {
+          const archivedJSONString = window.sessionStorage.getItem('archivedJSON');
+          const archivedJSON = JSON.parse(archivedJSONString);
+          populateWithArchived(archivedJSON);
+        },
+        100)
+      )
+
+      window.addEventListener('load', () => {
+        content.innerHTML = '';
+        dbStuff.modalWindow('modAl');
+      });
+
+    </script>
+
+    <!-- <script src="./utils.js" type="module"></script> -->
+    <script src="./renderer.js" content="script-src 'sha256-1Og1oOsSrIKsXSMP9xXxKdyZ/SDv6ngLsybsGxc8IGE='"></script>
+  </body>
+</html>

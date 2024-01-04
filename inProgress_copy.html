@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-1Og1oOsSrIKsXSMP9xXxKdyZ/SDv6ngLsybsGxc8IGE='; style-src 'self' 'unsafe-inline'"> -->
+    <meta http-equiv="Content-Security-Policy" content="style-src 'self' 'unsafe-inline';">
+    <link href="./styles.css" rel="stylesheet">
+    <link href="./css/bulma.css" rel="stylesheet">
+    <title>Hello World!</title>
+  </head>
+  <body>
+    <div id="window-container">
+      <nav>
+        <div id="nav-container">
+          <a href="./index.html"><button>Home</button></a>
+          <a href="./newProject.html"><button>New Project</button></a>
+          <a href="./pending.html"><button>Pending</button></a>
+          <a href="./inProgress.html"><button class="active">In Progress</button></a>
+          <a href="./completed.html"><button>Completed</button></a>
+          <a href="./archived.html"><button>Archived</button></a>
+          <a href="./onhold.html"><button>On Hold</button></a>
+        </div>
+      </nav>
+      <div id="content-container">
+        <h1>inProgress</h1>
+        We are using Node.js <span id="node-version"></span>,
+        Chromium <span id="chrome-version"></span>,
+        and Electron <span id="electron-version"></span>.
+        <a href="./completed.html"><button>Completed</button></a>
+      </div>
+    </div>
+
+    <script src="./db-utils.js" type="module" content="script-src 'sha256-1Og1oOsSrIKsXSMP9xXxKdyZ/SDv6ngLsybsGxc8IGE='"></script>
+
+    <script type="module">
+      import * as dbStuff from './db-utils.js';
+      const { dialog } = require('electron');
+
+      const content = document.querySelector('#content-container');
+
+      const dbPromise = new Promise((resolve, reject) => {
+        //const dbread = dbStuff.dbStuff('read', null, 'inProgress');
+        const dbread = dbStuff.showProjects('inProgress');
+        resolve(dbread);
+      });
+
+      const moveToCompleted = (projectCard) => {
+        const client = projectCard.querySelector('.client').textContent;
+        const project = projectCard.querySelector('.project').textContent;
+
+        dbStuff.moveDir('inProgress', client, project);
+      }
+
+      const makeCard = (project) => {
+        console.log();
+        const card = document.createElement('div');
+          card.classList.add('card');
+          card.dataset.id = project.id;
+
+        const button = document.createElement('button');
+          button.classList.add('completed-button');
+          button.textContent = "Completed";
+          button.addEventListener('click', (event) => {
+            console.log(event);
+            console.log(event.target.parentElement);
+
+            const thisCard = event.target.parentElement;
+            console.log(thisCard.dataset.id);
+            dbStuff.updateStatus(thisCard.dataset.id, 'inProgress');
+            moveToCompleted(thisCard);
+            thisCard.remove();
+          });
+
+        const cardContent = `<div class="card-content">
+                        <p class="client">${project.client_name}</p>
+                        <p class="project">${project.project_name}</p>
+                        <p><span>${project.thickness} </span><span>${project.unit} - </span><span>${project.material}</span></p>
+                        <p>Quantity: ${project.quantity}</p>
+                        <p>${project.comments}</p>
+                        <p>Status: ${project.status}</p>
+                        <p>Files: ${project.files}</p>
+                        </div>`;
+
+        card.insertAdjacentHTML("beforeend", cardContent);
+        card.appendChild(button);
+        content.appendChild(card);
+      }
+      // const rowsArr = dbStuff.dbStuff('read', null, 'inProgress')
+      // const rows = rowsArr[0];
+      //const inProgress3 = window.localStorage.getItem('inProgressJSON');
+
+      const populateWithInProgress = (inProgressProjects) => {
+        inProgressProjects.forEach((project) => {
+          makeCard(project);
+        })
+      }
+
+      dbPromise.then(
+        setTimeout(function() {
+          const inProgressJSONString = window.sessionStorage.getItem('inProgressJSON');
+          const inProgressJSON = JSON.parse(inProgressJSONString);
+          populateWithInProgress(inProgressJSON);
+        },
+        1000)
+      )
+
+      window.addEventListener('load', () => {
+        content.innerHTML = '';
+      });
+
+    </script>
+
+    <!-- <script src="./utils.js" type="module"></script> -->
+    <script src="./renderer.js" content="script-src 'sha256-1Og1oOsSrIKsXSMP9xXxKdyZ/SDv6ngLsybsGxc8IGE='"></script>
+  </body>
+</html>

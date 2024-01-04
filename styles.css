@@ -1,0 +1,159 @@
+/* styles.css */
+
+/* Add styles here to customize the appearance of your app */
+#window-container {
+    display: grid;
+    grid-template-areas: "nav content";
+    grid-template-columns: 1fr 4fr;
+    grid-template-rows: 1fr;
+    border: 1px solid blue;
+    height: 100vh;
+    width: 100vw;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+nav {
+    grid-area: nav;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    top: 0;
+    left: 0;
+    min-width: 125px;
+}
+
+#nav-container {
+    width: 20vw;
+    min-width: 125px;
+    height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    border: 1px solid #ccc;
+    background-color: darkcyan;
+}
+
+#content-container {
+    grid-area: content;
+    border: 1px solid red;
+    padding: 0.5em;
+}
+
+#nav-container button {
+    position: relative;
+    width: 100%;
+    height: 70px;
+    background-color: #ccc;
+    border: 1px solid #000;
+    font-size: clamp(0.75em, 1.25em, 1.75em);
+}
+
+#nav-container button:hover {
+    background-color: #333;
+    color: #fff;
+    cursor: pointer;
+    transition: 0.5s all;
+}
+
+#nav-container button.active {
+    background-color: crimson;
+    color: #fff;
+}
+
+#nav-container button.sit-bottom {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+}
+
+.required {
+    border: 3px solid red;
+}
+form {
+    width: 200px;
+}
+.card {
+    width: 750px;
+    border-radius: 2px;
+    border: 3px solid #000;
+    box-shadow: 5px 5px 5px rgba(0,0,0,0.35);
+    margin: 10px;
+    padding: 5px;
+    background-color: linen;
+    position: relative;
+}
+.card .details {
+    visibilIty: hidden;
+    height: 0;
+}
+.card .details-panel.visible {
+    display: block;
+}
+.card .details-panel {
+    padding: 0 18px;
+    background-color: white;
+    display: none;
+    overflow: hidden;
+    transition: max-height 0.2s ease-out;
+  }
+.card .details-button {
+    transition: all 0.25s;
+}
+.card .details-button:hover {
+    cursor: pointer;
+    color: rgb(56, 96, 150);
+}
+.card .details-button:after {
+    content: "\25BC";
+    position: relative;
+    right: -10px;
+}
+.card .details-button.hidden:after {
+    content: "\25B2";
+    position: relative;
+    right: -15px;
+}
+.card .client {
+    font-size: 1.25em;
+}
+.card .project {
+    font-size: 1.75em;
+}
+.card .client,
+.card .project {
+    font-weight: 900;
+}
+.card .status {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+}
+
+.card button.button {
+    right: 10px;
+    bottom: 10px;
+    position: absolute;
+}
+
+.modal-container {
+    position: absolute;
+    background-color: skyblue;
+    width: 100vw;
+    height: 100vh;
+}
+
+.modal-container.hidden {
+    display: none;
+}
+
+::backdrop {
+    background-image: linear-gradient(
+      45deg,
+      magenta,
+      rebeccapurple,
+      dodgerblue,
+      green
+    );
+    opacity: 0.75;
+  }

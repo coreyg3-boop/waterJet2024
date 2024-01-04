@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <!--<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' script-src 'unsafe-eval'">-->
+    <meta http-equiv="Content-Security-Policy" content="style-src 'self' 'unsafe-inline';">
+    <link href="./styles.css" rel="stylesheet">
+    <title>Create Project</title>
+  </head>
+  <body>
+    <div id="window-container">
+      <nav>
+        <div id="nav-container">
+          <a href="./index.html"><button>Home</button></a>
+          <a href="./newProject.html"><button class="active">New Project</button></a>
+          <a href="./pending.html"><button>Pending</button></a>
+          <a href="./inProgress.html"><button>In Progress</button></a>
+          <a href="./completed.html"><button>Completed</button></a>
+        </div>
+      </nav>
+      <div id="content-container">
+        <form id="page-form">
+            <label for="client_name">Client Name</label>
+            <input id="client_name" name="client_name" type="text" required value=""/>
+
+            <label for="project_name">Project Name</label>
+            <input id="project_name" name="project_name" value=""/>
+
+            <label for="material">Material</label>
+            <select id="unit" name="unit">
+              <option type="text" value="aluminum">Aluminum</option>
+              <option type="text" value="mild steel">Mild Steel</option>
+              <option type="text" value="stainless steel">Stainless Steel</option>
+              <option type="text" value="pvc foam">PVC Foam</option>
+              <option type="text" value="delrin">Delrin</option>
+              <option type="text" value="neoprene rubber">Neoprene Rubber</option>
+              <option type="text" value="neoprene rubber">Neoprene Rubber</option>
+            </select>
+
+            <label for="thickness">Thickness</label>
+            <input id="thickness" name="thickness" type="number" value=""/>
+
+            <label for="unit">Unit</label>
+            <select id="unit" name="unit">
+              <option type="text" value="inch">inch</option>
+              <option type="text" value="mm">mm</option>
+              <option type="text" value="gauge">gauge</option>
+            </select>
+
+            <label for="quantity">Quantity</label>
+            <input id="quantity" name="quantity" type="number" value=""/>
+
+            <label for="comments">Comments</label>
+            <textarea id="comments" name="comments" type="text" value=""></textarea>
+
+            <label for="files">Files</label>
+            <input id="files" name="files" type="file" multiple value=""/>
+        </form>
+        <button class="submit" data-crud="create">Create Project</button>
+      </div>
+    </div>
+
+    <div class="modal-container" style="display: none">
+      <p>Project will be created as:</p>
+      <p class="modal-client"></p>
+      <p class="modal-project"></p>
+      <p><span class="modal-material"></span><span class="modal-thickness"></span><span class="modal-unit"></span></p>
+      <p class="modal-quantity"></p>
+      <p class="modal-comments"></p>
+      <button></button>
+    </div>
+
+    <!-- You can also require other files to run in this process -->
+    <script src="./db-utils.js" type="module"></script>
+
+    <script type="module">
+      import * as dbStuff from './db-utils.js';
+      const { dialog } = require('electron');
+
+      const subButton = document.querySelector('button.submit');
+      const theForm = document.querySelector('#page-form');
+      const val1 = theForm.querySelector('#value1');
+      let crudOp;
+      const values = [];
+      let formComplete = false;
+      let incompleteField;
+      let clientDir = '';
+      let projectDir = '';
+      const selFiles = [];
+      function tempObj(entry, data) {
+        this.entry = entry;
+        this.data = data;
+
+        return this;
+      }
+
+      const inputs = theForm.querySelectorAll('label');
+
+      const modal = `
+        <div class="modal">
+          <p>Project will be created as:</p>
+          <p class="modal-client"></p>
+          <p class="modal-project"></p>
+          <p><span class="modal-material"></span><span class="modal-thickness"></span><span class="modal-unit"></span></p>
+          <p class="modal-quantity"></p>
+          <p class="modal-comments"></p>
+          <button></button>
+        </div>
+      `
+
+      const varReset = () => {
+          crudOp = "";
+          values.length = 0;
+          formComplete = false;
+          incompleteField = true;
+          clientDir = '';
+          projectDir = '';
+          selFiles.length = 0;
+        };
+      
+      subButton.addEventListener('click', (ev) => {
+        incompleteField = false;
+        console.log('form to be submitted');
+        crudOp = ev.target.dataset.crud;
+        console.log(inputs.nextElementSibling);
+        inputs.forEach((item, index) => {
+          console.log(item.attributes.for.value);
+          if(item.attributes.for.value == "client_name") {
+            clientDir = item.nextElementSibling.value;
+          }
+          if(item.attributes.for.value == "project_name") {
+            projectDir = item.nextElementSibling.value;
+          }
+          if(item.attributes.for.value == "files") {
+            const selectedFiles = item.nextElementSibling.files;
+
+            for (const file of selectedFiles) {
+              console.log(file);
+              selFiles.push(file);
+            }
+          }
+          if(item.nextElementSibling.value == '' || item.nextElementSibling.value == 'undefined' || item.nextElementSibling.value == undefined || item.nextElementSibling.value.length == 0) {
+            incompleteField = true;
+            item.nextElementSibling.classList.add('required');
+          } else if (item.nextElementSibling.value != '' || item.nextElementSibling.value != 'undefined' || item.nextElementSibling.value != undefined || item.nextElementSibling.value.length >= 1) {
+            console.log(item.nextElementSibling.value);
+
+            if(item.attributes.for.value == "files") {
+              const fileArr = [];
+              const selectedFiles = item.nextElementSibling.files;
+
+              for (const file of selectedFiles) {
+                fileArr.push(file.name);
+              }
+              values.push(new tempObj(item.attributes.for.value, fileArr));
+            } else {
+              //values.push(`{'db_col': '${item.attributes.for.value}', 'db_entry': '${item.nextElementSibling.value}'`);
+              values.push(new tempObj(item.attributes.for.value, item.nextElementSibling.value));
+            }
+          } else {
+            console.log('empty else');
+          }
+        });
+        console.log(values);
+
+        if(incompleteField) {
+          console.log('field incomplete');
+        } else {
+          console.log('form complete');
+          formComplete = true;
+        }
+
+        if (formComplete) {
+          const formToDB = new Promise((resolve, reject) => {
+            resolve(
+              dbStuff.dbStuff(crudOp, values, 'new')
+            );
+          });
+
+          formToDB.then(() => {
+            dbStuff.createDir(clientDir, projectDir, selFiles);
+          }).then(() => {
+            //console.log('~~~~~~~~~~~~~~~!!!!!!!!!!!!!second init db done!!!!!!!!!!!!!!!!!!');
+            setTimeout(varReset, 2000);
+          });
+          // console.log(clientDir);
+          // dbStuff.dbStuff(crudOp, values, 'new');
+          // dbStuff.createDir(clientDir, projectDir, selFiles);
+
+
+
+          theForm.reset();
+
+          //varReset();
+        }
+      });
+    </script>
+
+    <script src="./utils.js" type="module"></script>
+    <script src="./renderer.js"></script>
+  </body>
+</html>

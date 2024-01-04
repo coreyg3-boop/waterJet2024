@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <!--<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' script-src 'unsafe-eval'">-->
+    <meta http-equiv="Content-Security-Policy" content="style-src 'self' 'unsafe-inline';">
+    <link href="./styles.css" rel="stylesheet">
+    <link href="./css/bulma.css" rel="stylesheet">
+    <title>Create Project</title>
+    <style>
+      .project-page {
+        padding: 0.5em;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas: 'form preview';
+        gap: 0;
+        justify-content: center;
+        justify-items: center;
+      }
+      .project-form {
+        grid-area: form;
+        border: 1px dotted blue;
+        width: 100%;
+      }
+      .project-preview {
+        grid-area: preview;
+        border: 1px dotted red;
+        width: 90%;
+      }
+      button.submit {
+        position: relative;
+        left: calc(50% - 75px);
+        text-align: center;
+        width: 150px;
+      }
+      svg {
+        background-color: #000;
+        padding: 15px;
+      }
+      svg g {
+        stroke-width:0.4%;
+        //stroke: rgb(26, 202, 70);
+      }
+      svg g.quality1 {
+        stroke: rgb(255, 0, 0);
+      }
+      svg g.quality2 {
+        stroke: rgb(226, 74, 150);
+      }
+      svg g.quality3 {
+        stroke: rgb(151, 27, 145);
+      }
+      svg g.quality4 {
+        stroke: rgb(124, 70, 224);
+      }
+      svg g.quality5 {
+        stroke: rgb(0, 60, 255);
+      }
+      svg g.qualityTraverse {
+        stroke: rgb(0, 250, 12);
+      }
+      svg g.qualityLeads {
+        stroke: rgb(255, 174, 0);
+      }
+      .hidden {
+        visibility: hidden;
+        display: none;
+      }
+      .client-modal {
+        background-color: red;
+        width: 500px;
+        height: 500px;
+        position: absolute;
+        top: calc(100vh - (500px + (500px/2)));
+        left: calc(100vw - (500px + (500px/2)));
+      }
+      fieldset {
+        border: 1px solid black;
+        padding: 0.5em;
+        width: fit-content;
+      }
+      button.save-changes {
+        margin-top: 0.5em;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="window-container">
+      <nav>
+        <div id="nav-container">
+          <a href="./index.html"><button>Home</button></a>
+          <a href="./newProject.html"><button>New Project</button></a>
+          <a href="./pending.html"><button>Pending</button></a>
+          <a href="./inProgress.html"><button>In Progress</button></a>
+          <a href="./completed.html"><button>Completed</button></a>
+          <a href="./archived.html"><button>Archived</button></a>
+          <a href="./onHold.html"><button>On Hold</button></a>
+          <a href="./settings.html"><button class="active sit-bottom">Settings</button></a>
+        </div>
+      </nav>
+      <div id="content-container">
+        <fieldset>
+            <legend>Mapped Drive Letter</legend>
+            <!-- <label for="drive_letter">Mapped Drive Letter</label> -->
+            <input type="text" name="drive_letter" id="drive_letter" disabled placeholder="Z" value=""/>
+            <button class="edit-drive">Edit</button>
+        </fieldset>
+        <hr/>
+        <button class="save-changes">Save Changes</button>
+      </div>
+        
+    </div>
+    <!-- You can also require other files to run in this process -->
+    <script src="./db-utils.js" type="module"></script>
+
+    <script type="module">
+      import * as dbStuff from './db-utils.js';
+      const { dialog } = require('electron');
+
+      const driveLetterInput = document.querySelector('#drive_letter');
+      const editDriveButton = document.querySelector('.edit-drive');
+      const saveChangesButton = document.querySelector('.save-changes');
+      let updatedDriveLetter = "";
+
+      editDriveButton.addEventListener('click', () => {
+        driveLetterInput.removeAttribute('disabled');
+        console.log('hjkhjk');
+      })
+
+      driveLetterInput.addEventListener('change', (e) => {
+        updatedDriveLetter = e.target.value;
+        updatedDriveLetter = updatedDriveLetter.toUpperCase();
+
+        window.localStorage.setItem('driveLetter', updatedDriveLetter);
+      })
+      
+    </script>
+
+    <script src="./utils.js" type="module"></script>
+    <script src="./renderer.js"></script>
+  </body>
+</html>

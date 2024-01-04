@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-1Og1oOsSrIKsXSMP9xXxKdyZ/SDv6ngLsybsGxc8IGE='; style-src 'self' 'unsafe-inline'"> -->
+    <meta http-equiv="Content-Security-Policy" content="style-src 'self' 'unsafe-inline';">
+    <link href="./styles.css" rel="stylesheet">
+    <link href="./css/bulma.css" rel="stylesheet">
+    <title>Hello World!</title>
+  </head>
+  <body>
+    <div id="window-container">
+      <nav>
+        <div id="nav-container">
+          <a href="./index.html"><button>Home</button></a>
+          <a href="./newProject.html"><button>New Project</button></a>
+          <a href="./pending.html"><button>Pending</button></a>
+          <a href="./inProgress.html"><button>In Progress</button></a>
+          <a href="./completed.html"><button class="active">Completed</button></a>
+          <a href="./archived.html"><button>Archived</button></a>
+          <a href="./onHold.html"><button>On Hold</button></a>
+          <a href="./settings.html"><button class="sit-bottom">Settings</button></a>
+        </div>
+      </nav>
+      <div id="content-container">
+        <h1>completed</h1>
+        We are using Node.js <span id="node-version"></span>,
+        Chromium <span id="chrome-version"></span>,
+        and Electron <span id="electron-version"></span>.
+        <a href="./completed.html"><button>Completed</button></a>
+
+
+        <input type="file" id="file" />
+        <div>Number of entities:<span id="numberOfEntities">-</span></div>
+        <div id="svg"></div>
+
+        <div class="svg-to-img"></div>
+
+
+      </div>
+
+
+    </div>
+
+    <script src="./db-utils.js" type="module" content="script-src 'sha256-1Og1oOsSrIKsXSMP9xXxKdyZ/SDv6ngLsybsGxc8IGE='"></script>
+
+    <script type="module">
+
+const dxf = window.require('./dist/dxf');
+
+var numberOfEntities = document.getElementById('numberOfEntities')
+      var svgContainer = document.getElementById('svg')
+      var fileInput = document.getElementById('file')
+      // window.require(['../dist/dxf'], function (dxf) {
+      const dxfFunction = (dxf) => {
+        dxf.config.verbose = true
+        fileInput.addEventListener('change', function (event) {
+          var file = event.target.files[0]
+          var reader = new FileReader()
+          numberOfEntities.innerHTML = 'reading...'
+          reader.onload = function (e) {
+            if (e.target.readyState === 2) {
+              var dxfContents = e.target.result
+              var helper = new dxf.Helper(dxfContents)
+              numberOfEntities.innerHTML = helper.denormalised.length
+              const svg = helper.toSVG()
+              svgContainer.innerHTML = svg
+              svgToImg();
+            }
+          }
+          reader.readAsBinaryString(file)
+        })
+      }
+      dxfFunction(dxf);
+
+
+      const svgToImg = () => {
+        console.log('svging');
+        const contentCont = document.querySelector('#content-container');
+        const mySVG    = document.querySelector('#svg svg');    // Inline SVG element
+        const tgtImage = document.querySelector('.svg-to-img');      // Where to draw the result
+        const can      = document.createElement('canvas'); // Not shown on page
+        const ctx      = can.getContext('2d');
+        const loader   = new Image;
+
+        loader.width  = can.width  = tgtImage.width;
+        loader.height = can.height = tgtImage.height;
+
+        document.body.appendChild(can);
+
+        loader.onload = function(){
+          ctx.drawImage( loader, 0, 0, loader.width, loader.height );
+          tgtImage.src = can.toDataURL();
+          console.log('loadededed');
+        };
+        var svgAsXML = (new XMLSerializer).serializeToString( mySVG );
+        loader.src = 'data:image/svg+xml,' + encodeURIComponent( svgAsXML );
+
+        contentCont.appendChild(loader);
+
+      }   
+
+      import * as dbStuff from './db-utils.js';
+      const { dialog } = require('electron');
+
+      const content = document.querySelector('#content-container');
+
+      const dbPromise = new Promise((resolve, reject) => {
+        const dbread = dbStuff.dbStuff('read', null, 'completed');
+        //const dbread = dbStuff.showProjects('completed');
+        resolve(dbread);
+      });
+
+      const moveToArchived = (projectCard) => {
+        const client = projectCard.querySelector('.client').textContent;
+        const project = projectCard.querySelector('.project').textContent;
+
+        dbStuff.moveDir('completed', client, project);
+      }
+
+      const makeCard = (project) => {
+        console.log();
+        const card = document.createElement('div');
+          card.classList.add('card');
+          card.dataset.id = project.id;
+
+        const button = document.createElement('button');
+          button.classList.add('completed-button');
+          button.textContent = "Archive Project";
+          button.addEventListener('click', (event) => {
+            console.log(event);
+            console.log(event.target.parentElement);
+
+            const thisCard = event.target.parentElement;
+            console.log(thisCard.dataset.id);
+            dbStuff.updateStatus(thisCard.dataset.id, 'completed');
+            moveToArchived(thisCard);
+            thisCard.remove();
+          });
+
+        const cardContent = `<div class="card-content">
+                        <p class="client">${project.client_name}</p>
+                        <p class="project">${project.project_name}</p>
+                        <p><span>${project.thickness} </span><span>${project.unit} - </span><span>${project.material}</span></p>
+                        <p>Quantity: ${project.quantity}</p>
+                        <p>${project.comments}</p>
+                        <p>Status: ${project.status}</p>
+                        <p>Cut Time: ${project.cut_time} mins</p>
+                        <p>Files: ${project.files}</p>
+                        </div>`;
+
+        card.insertAdjacentHTML("beforeend", cardContent);
+        card.appendChild(button);
+        content.appendChild(card);
+      }
+      // const rowsArr = dbStuff.dbStuff('read', null, 'completed')
+      // const rows = rowsArr[0];
+      //const completed3 = window.localStorage.getItem('completedJSON');
+
+      const populateWithcompleted = (completedProjects) => {
+        completedProjects.forEach((project) => {
+          makeCard(project);
+        })
+      }
+
+      dbPromise.then(
+        setTimeout(function() {
+          const completedJSONString = window.sessionStorage.getItem('completedJSON');
+          const completedJSON = JSON.parse(completedJSONString);
+          populateWithcompleted(completedJSON);
+        },
+        1000)
+      )
+
+      window.addEventListener('load', () => {
+        content.innerHTML = '';
+      });
+
+    </script>
+
+    <!-- <script src="./utils.js" type="module"></script> -->
+    <script src="./renderer.js" content="script-src 'sha256-1Og1oOsSrIKsXSMP9xXxKdyZ/SDv6ngLsybsGxc8IGE='"></script>
+  </body>
+</html>

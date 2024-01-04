@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <!--<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' script-src 'unsafe-eval'">-->
+    <meta http-equiv="Content-Security-Policy" content="style-src 'self' 'unsafe-inline';">
+    <link href="./styles.css" rel="stylesheet">
+    <link href="./css/bulma.css" rel="stylesheet">
+    <title>Create Project</title>
+    <style>
+      .project-page {
+        padding: 0.5em;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas: 'form preview';
+        gap: 0;
+        justify-content: center;
+        justify-items: center;
+      }
+      .project-form {
+        grid-area: form;
+        border: 1px dotted blue;
+        width: 100%;
+      }
+      .project-preview {
+        grid-area: preview;
+        border: 1px dotted red;
+        width: 90%;
+      }
+      button.submit {
+        position: relative;
+        left: calc(50% - 75px);
+        text-align: center;
+        width: 150px;
+      }
+      svg {
+        background-color: #000;
+        padding: 15px;
+      }
+      svg g {
+        stroke-width:0.4%;
+        //stroke: rgb(26, 202, 70);
+      }
+      svg g.quality1 {
+        stroke: rgb(255, 0, 0);
+      }
+      svg g.quality2 {
+        stroke: rgb(226, 74, 150);
+      }
+      svg g.quality3 {
+        stroke: rgb(151, 27, 145);
+      }
+      svg g.quality4 {
+        stroke: rgb(124, 70, 224);
+      }
+      svg g.quality5 {
+        stroke: rgb(0, 60, 255);
+      }
+      svg g.qualityTraverse {
+        stroke: rgb(0, 250, 12);
+      }
+      svg g.qualityLeads {
+        stroke: rgb(255, 174, 0);
+      }
+      .hidden {
+        visibility: hidden;
+        display: none;
+      }
+      .client-modal {
+        //width: 500px;
+        //height: 500px;
+        /* position: absolute;
+        top: calc(100vh - (500px + (500px/2)));
+        left: calc(100vw - (500px + (500px/2))); */
+      }
+
+      .client-modal .close-button {
+        top: 0;
+        right: 0;
+        position: absolute;
+        margin: -2px;
+        /* border-radius: 100%; */
+        background-color: red;
+        color: white;
+        line-height: 1.35em;
+        height: 30px;
+        width: 30px;
+      }
+
+      dialog {
+        overflow: hidden;
+      }
+
+      ::backdrop {
+        background-image: linear-gradient(
+          45deg,
+          magenta,
+          rebeccapurple,
+          dodgerblue,
+          green
+        );
+        opacity: 0.75;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div id="window-container">
+      <nav>
+        <div id="nav-container">
+          <a href="./index.html"><button>Home</button></a>
+          <a href="./newProject.html"><button class="active">New Project</button></a>
+          <a href="./pending.html"><button>Pending</button></a>
+          <a href="./inProgress.html"><button>In Progress</button></a>
+          <a href="./completed.html"><button>Completed</button></a>
+          <a href="./archived.html"><button>Archived</button></a>
+          <a href="./onHold.html"><button>On Hold</button></a>
+          <a href="./settings.html"><button class="sit-bottom">Settings</button></a>
+        </div>
+      </nav>
+      <div id="content-container">
+        <div class="project-page">
+          <div class="project-form">
+            <form id="page-form">
+                <label for="client_name">Client Name</label>
+                <select id="client_name" name="client_name" required>
+                </select>
+                <button id="add_client">+</button>
+
+                <label for="project_name">Project Name</label>
+                <input id="project_name" name="project_name" required value=""/>
+
+                <label for="material">Material</label>
+                <select id="material" name="material" required>
+                  <option type="text" value="aluminum">Aluminum</option>
+                  <option type="text" value="mild steel">Mild Steel</option>
+                  <option type="text" value="stainless steel">Stainless Steel</option>
+                  <option type="text" value="pvc foam">PVC Foam</option>
+                  <option type="text" value="delrin">Delrin</option>
+                  <option type="text" value="neoprene rubber">Neoprene Rubber</option>
+                  <option type="text" value="neoprene rubber">Neoprene Rubber</option>
+                </select>
+
+                <label for="thickness">Thickness</label>
+                <input id="thickness" name="thickness" type="number" value="" required />
+
+                <label for="unit">Unit</label>
+                <select id="unit" name="unit">
+                  <option type="text" value="inch">inch</option>
+                  <option type="text" value="mm">mm</option>
+                  <option type="text" value="gauge">gauge</option>
+                </select>
+
+                <label for="quantity">Quantity</label>
+                <input id="quantity" name="quantity" type="number" value="" required />
+
+                <label for="comments">Comments</label>
+                <textarea id="comments" name="comments" type="text" value=""></textarea>
+
+                <label for="files">Files</label>
+                <input type="file" id="files" name="files" multiple value=""/>
+                <div>Number of entities:<span id="numberOfEntities">-</span></div>
+
+                
+                <label for="multi-procedure">Multi-Procedure Project</label>
+                <input type="checkbox" id="multi-procedure" name="multi-procedure" value=""/>
+                <div class="multi-procedure-form hidden" style="margin-left: 0.5em">
+                  <input type="checkbox" id="step-water-jet" name="step-water-jet" value=""/>
+                  <label for="step-water-jet">Water Jet</label>
+                  <br/>
+                  <input type="checkbox" id="step-forming" name="step-forming" value=""/>
+                  <label for="step-forming">Forming</label>
+                  <br/>
+                  <input type="checkbox" id="step-machining" name="step-machining" value=""/>
+                  <label for="step-machining">Machining</label>
+                  <br/>
+                  <input type="checkbox" id="step-other" name="step-other" value=""/>
+                  <label for="step-other">Other</label>
+                  <br/>
+                </div>
+      
+            </form>
+          </div>
+          <div class="project-preview">
+            <div class="project-preview-details">
+              <h3>Project Preview</h3>
+              <p class="preview-client-name"></p>
+              <p class="preview-project-name"></p>
+              <p class="preview-project-material"></p>
+              <p class="preview-project-thickness"></p>
+              <p class="preview-project-unit"></p>
+              <p class="preview-project-quantity"></p>
+              <p class="preview-project-comments"></p>
+              <div class="preview-project-fileList"></div>
+            </div>
+            <div id="svg"></div>
+            <button class="submit" data-crud="create">Create Project</button>
+            <button class="svg-to-png">svg to png</button>
+            <canvas id="canvas"></canvas>
+          </div>
+        </div>
+        <hr/>
+        <hr/>
+
+      </div>
+    </div>
+
+    <dialog class="client-modal">
+      <p>Add a new client</p><button class="close-button">X</button>
+      <div>
+        <div class="input-set">
+          <label for="client_modal_client_name">Client Name:<br/>
+            <input type="text" id="client_modal_client_name" name="client_modal_client_name" value=""/>
+          </label>
+        </div>
+        <div class="input-set">
+          <label for="client_modal_client_phone">Client Phone:<br/>
+            <input type="text" id="client_modal_client_phone" name="client_modal_client_phone" value=""/>
+          </label>
+        </div>
+        
+        <button class="save-client">Save New Client</button>
+      </div>
+    </dialog>  
+
+    <div class="modal-container" style="display: none">
+      <p>Project will be created as:</p>
+      <p class="modal-client"></p>
+      <p class="modal-project"></p>
+      <p><span class="modal-material"></span><span class="modal-thickness"></span><span class="modal-unit"></span></p>
+      <p class="modal-quantity"></p>
+      <p class="modal-comments"></p>
+      <button></button>
+    </div>
+
+    <!-- You can also require other files to run in this process -->
+    <script src="./db-utils.js" type="module"></script>
+
+    <script type="module">
+      import * as dbStuff from './db-utils.js';
+      const { dialog } = require('electron');
+
+      dbStuff.showDot();
+
+      const dialogModal = document.querySelector("dialog");
+      const showButton = document.querySelector("button#add_client");
+      const closeButton = document.querySelector("dialog button.close-button");
+
+      // "Show the dialog" button opens the dialog modally
+      showButton.addEventListener("click", () => {
+        dialogModal.showModal();
+      });
+
+      // "Close" button closes the dialog
+      closeButton.addEventListener("click", () => {
+        dialogModal.close();
+      });
+
+
+
+      const subButton = document.querySelector('button.submit');
+      const theForm = document.querySelector('#page-form');
+      const val1 = theForm.querySelector('#value1');
+      let crudOp;
+      const values = [];
+      let formComplete = false;
+      let incompleteField;
+      let clientDir = '';
+      let projectDir = '';
+      const selFiles = [];
+      const flatProjectFile = [];
+      function tempObj(entry, data) {
+        this.entry = entry;
+        this.data = data;
+
+        flatProjectFile.push(this);
+
+        return this;
+      }
+
+      const populateClientSelectionMenu = () => {
+        const clientList = theForm.querySelector('select#client_name');
+        const clientsJSON = JSON.parse(window.sessionStorage.getItem("clientsJSON"));
+
+        for(let client in clientsJSON) {
+          const clientOption = document.createElement('option');
+          clientOption.setAttribute('type', 'text');
+          clientOption.setAttribute('value', clientsJSON[client].client_name);
+          clientOption.textContent = clientsJSON[client].client_name;
+          clientList.appendChild(clientOption);
+        }
+      }
+
+      const getClientList = () => {
+        dbStuff.getClients();
+        console.log(dbStuff.getClients());
+        populateClientSelectionMenu();
+      }
+
+      getClientList();
+
+      const openNewClientModal = () => {
+        const closeModal = () => {
+          const clientModal = document.querySelector('#window-container div.client-modal-container');
+          clientModal.remove();
+        }
+
+        const showClientModal = (projectCard, project) => {
+          const windowContainer = document.querySelector('#window-container');
+          const clientModalContainer = document.createElement('div');
+          clientModalContainer.classList.add('client-modal-container');
+
+        const clientModal = `
+          <div class="client-modal">
+            <button class="close-button">X</button>
+            <div class="input-set">
+              <label for="client_modal_client_name">Client Name:<br/>
+                <input type="text" id="client_modal_client_name" name="client_modal_client_name" value=""/>
+              </label>
+            </div>
+            <div class="input-set">
+              <label for="client_modal_client_phone">Client Phone:<br/>
+                <input type="text" id="client_modal_client_phone" name="client_modal_client_phone" value=""/>
+              </label>
+            </div>
+            
+            <button class="save-client">Save New Client</button>
+          </div>
+          ` 
+          clientModalContainer.innerHTML = clientModal;
+
+          windowContainer.appendChild(clientModalContainer);
+
+          const closeClientModal = clientModalContainer.querySelector('button.close-button');
+          const saveClient = clientModalContainer.querySelector('button.save-client');
+
+          closeClientModal.addEventListener('click', (e) => {
+            closeModal();
+          })
+
+          saveClient.addEventListener('click', () => {
+            const newClientName = document.querySelector('#client_modal_client_name');
+
+            console.log(newClientName.value);
+
+            //dbStuff.addClient(clientCreds);
+          })
+        }
+
+        showClientModal();
+      }
+
+      // const addClientButton = theForm.querySelector('button#add_client');
+
+      // addClientButton.addEventListener('click', () => {
+      //   openNewClientModal();
+      // })
+
+      const inputs = theForm.querySelectorAll('label');
+      const multiProcedure = theForm.querySelector('#multi-procedure');
+      const multiProcedureForm = theForm.querySelector('.multi-procedure-form');
+      const multiProcedureInputs = multiProcedureForm.querySelectorAll('input');
+      let isMultiProcedure = false;
+
+      multiProcedure.addEventListener('click', (e) => {
+        e.stopPropagation();
+        isMultiProcedure = e.target.checked;
+        multiProcedureForm.classList.toggle('hidden');
+        //dbStuff.updateFlatDbStatus();
+        // if(isMultiProcedure) {
+        //   const multiProcedureInputs = multiProcedureForm.querySelectorAll('input');
+        //   multiProcedureInputs.forEach((item, index) => {
+        //     item.addEventListener('change', (e) => {
+        //       console.log(e.target.checked);
+        //       if (e.target.checked) {
+        //         console.log(e.target.name)
+        //       }
+        //     })
+        //   })
+        // }
+      });
+
+      const modal = `
+        <div class="modal">
+          <p>Project will be created as:</p>
+          <p class="modal-client"></p>
+          <p class="modal-project"></p>
+          <p><span class="modal-material"></span><span class="modal-thickness"></span><span class="modal-unit"></span></p>
+          <p class="modal-quantity"></p>selFiles
+          <p class="modal-comments"></p>
+          <button></button>
+        </div>
+      `
+
+      const varReset = () => {
+          crudOp = "";
+          values.length = 0;
+          formComplete = false;
+          incompleteField = true;
+          clientDir = '';
+          projectDir = '';
+          selFiles.length = 0;
+        };
+      
+      subButton.addEventListener('click', (ev) => {
+        incompleteField = false;
+        console.log('form to be submitted');
+        crudOp = ev.target.dataset.crud;
+        console.log(inputs.nextElementSibling);
+        inputs.forEach((item, index) => {
+          console.log(item.attributes.for.value);
+          if(item.attributes.for.value == "client_name") {
+            clientDir = item.nextElementSibling.value;
+          }
+          if(item.attributes.for.value == "project_name") {
+            projectDir = item.nextElementSibling.value;
+          }
+          if(item.attributes.for.value == "project_name") {
+            projectDir = item.nextElementSibling.value;
+          }
+          if(item.attributes.for.value == "files") {
+            const selectedFiles = item.nextElementSibling.files;
+
+            for (const file of selectedFiles) {
+              console.log(file);
+              
+              selFiles.push(file);
+            }
+          }
+
+          if(item.nextElementSibling.hasAttribute('required') && (item.nextElementSibling.value == '' || item.nextElementSibling.value == 'undefined' || item.nextElementSibling.value == undefined || item.nextElementSibling.value.length == 0)) {
+            incompleteField = true;
+            item.nextElementSibling.classList.add('required');
+          } else if (item.nextElementSibling.value != '' || item.nextElementSibling.value != 'undefined' || item.nextElementSibling.value != undefined || item.nextElementSibling.value.length >= 1) {
+            console.log(item.nextElementSibling.value);
+
+            if (item.attributes.for.value == "files") {
+              const fileArr = [];
+              let fileJSON = {};
+              const selectedFiles = item.nextElementSibling.files;
+
+              for (const file of selectedFiles) {
+                fileArr.push(file);
+              }
+              fileJSON = {'files': fileArr};
+              values.push(fileJSON);
+            } else if (item.attributes.for.value == "multi-procedure") {
+                if (item.nextElementSibling.checked) {
+                  console.log('multi-ptocedural');
+                } 
+              //values.push(`{'db_col': '${item.attributes.for.value}', 'db_entry': '${item.nextElementSibling.value}'`);
+            } else if (item.attributes.for.value != "multi-procedure" || item.attributes.for.value != "files") {
+              values.push(new tempObj(item.attributes.for.value, item.nextElementSibling.value));
+            }
+          } else {
+            console.log('empty else');
+          }
+        });
+        console.log(values);
+
+        // if(isMultiProcedure) {
+        //   multiProcedureForm.querySelectorAll('input');
+        // }
+
+        const getMultiProcedure = () => {
+          const selectedProcedures = [];
+          let unspecified = true;
+          if (multiProcedureInputs.length == 0) {
+            selectedProcedures.push('unspecified');
+          } else {
+            multiProcedureInputs.forEach((item, index) => {
+              if (item.checked && item.name != 'multi-procedure') {
+                unspecified = false;
+                selectedProcedures.push(item.name);
+              }
+            })
+            if (unspecified) {
+              selectedProcedures.push('unspecified');
+            }
+          }
+          values.push(new tempObj('procedures', selectedProcedures));
+        }
+
+        if(incompleteField) {
+          console.log('field incomplete');
+        } else {
+          console.log('form complete');
+          //if (isMultiProcedure) {
+          getMultiProcedure();
+          //}
+          formComplete = true;
+        }
+
+        // if (formComplete) {
+        //   const formToStorage = () => {
+        //     console.log(values);
+        //     for(let value in values) {
+        //       console.log(values[value]);
+        //       console.log(value)
+        //     }
+        //     //window.localStorage.setItem('')
+        //   }
+        //   formToStorage();
+        // }
+
+        /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~ Uncomment when DB access is allowed again ~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+        if (formComplete) {
+          
+          const formToDB = new Promise((resolve, reject) => {
+            resolve(
+              dbStuff.dbStuff(crudOp, values, 'new')
+            );
+          });
+
+          formToDB.then(() => {
+            dbStuff.createDir(clientDir, projectDir, selFiles, flatProjectFile);
+            // dbStuff.updateFlatDbStatus();
+          }).then(() => {
+            setTimeout(varReset, 2000);
+          });
+          theForm.reset();
+        }
+      });
+
+  var numberOfEntities = document.getElementById('numberOfEntities');
+  var svgContainer = document.getElementById('svg');
+  var fileInput = document.getElementById('files');
+  const dxf = window.require('./dist/dxf');
+
+  const readDXFFile = (file) => {
+      var reader = new FileReader()
+      numberOfEntities.innerHTML = 'reading...'
+      reader.onload = function (e) {
+        if (e.target.readyState === 2) {
+          var dxfContents = e.target.result
+          var helper = new dxf.Helper(dxfContents)
+          numberOfEntities.innerHTML = helper.denormalised.length
+          console.log(helper);
+          // for(let line in helper.parsed.entities) {
+          //   console.log(helper.parsed.entities[line].colorNumber)
+          //   if (helper.parsed.entities[line].colorNumber == 8) {
+          //     helper.parsed.entities[line].colorNumber = 1;
+          //   }
+          // }
+          const svg = helper.toSVG();
+          console.log(svg);
+          console.log(typeof(svg));
+          const searchBG = '<g stroke="#000000" stroke-width="0.1%" fill="none" transform="matrix(1,0,0,-1,0,0)">';
+          const replaceWithBG = '<g stroke="#000000" stroke-width="0.1%" fill="none" transform="matrix(1,0,0,-1,0,0)"> <g fill="black" stroke="black" stroke-width="1"> <rect x="0" y="0" width="100" height="100" style="fill:black;stroke:black;stroke-width:1;fill-opacity:1;stroke-opacity:1" /> </g>';
+          const resultBG = svg.split(searchBG).join(replaceWithBG);
+          const search1 = 'stroke="rgb(255, 0, 0)"';
+          const replaceWith1 = 'stroke="rgb(255, 0, 0)" stroke-width="0.3%" class="quality1"';
+          const result1 = resultBG.split(search1).join(replaceWith1);
+          const search2 = 'stroke="rgb(255, 255, 0)"';
+          const replaceWith2 = 'stroke="rgb(255, 0, 120)" stroke-width="0.3%" class="quality2"';
+          const result2 = result1.split(search2).join(replaceWith2);
+          const search3 = 'stroke="rgb(0, 255, 0)"';
+          const replaceWith3 = 'stroke="rgb(128, 0, 128)" stroke-width="0.3%" class="quality3"';
+          const result3 = result2.split(search3).join(replaceWith3);
+          const search4 = 'stroke="rgb(0, 255, 255)"';
+          const replaceWith4 = 'stroke="rgb(0, 255, 255)" stroke-width="0.3%" class="quality4"';
+          const result4 = result3.split(search4).join(replaceWith4);
+          const search5 = 'stroke="rgb(12, 12, 12)"';
+          const replaceWith5 = 'stroke="rgb(0, 0, 255)" stroke-width="0.3%" class="quality5"';
+          const result5 = result4.split(search5).join(replaceWith5);
+          const searchTraverse = 'stroke="rgb(0, 0, 0)"';
+          const replaceWithTraverse = 'stroke="rgb(0, 255, 0)" stroke-width="0.3%" class="qualityTraverse"';
+          const resultTraverse = result5.split(searchTraverse).join(replaceWithTraverse);
+          const searchHeadsUpTraverse = 'stroke="rgb(10, 10, 10)"';
+          const replaceWithHeadsUpTraverse = 'stroke="rgb(10, 10, 10)" stroke-width="0.3%" class="qualityHeadsUpTraverse"';
+          const resultHeadsUpTraverse = resultTraverse.split(searchHeadsUpTraverse).join(replaceWithHeadsUpTraverse);
+          const searchLeads = 'stroke="rgb(128, 128, 128)"';
+          const replaceWithLeads = 'stroke="rgb(255, 150, 0)" stroke-width="0.3%" class="qualityLeads"';
+          const resultLeads = resultHeadsUpTraverse.split(searchLeads).join(replaceWithLeads);
+          const searchScribe = 'stroke="rgb(10, 10, 10)"';
+          const replaceWithScribe = 'stroke="rgb(10, 10, 10)" stroke-width="0.3%" class="qualityScribe"';
+          const resultScribe = resultLeads.split(searchScribe).join(replaceWithScribe);
+          const searchWaterOnly = 'stroke="rgb(10, 10, 10)"';
+          const replaceWithWaterOnly = 'stroke="rgb(10, 10, 10)" stroke-width="0.3%" class="qualityWaterOnly"';
+          const resultWaterOnly = resultScribe.split(searchWaterOnly).join(replaceWithWaterOnly);
+          console.log(resultWaterOnly);
+          console.log(svg);
+
+          //const pngImg = new UInt8(imgURI);
+
+          //console.log(pngImg);
+
+          //console.log(svg.replaceAll('stroke=rgb(65,65,65)', 'stroke=rgb(255,255,255)'));
+          svgContainer.innerHTML += `
+              <p>${file.name}</p>
+              ${resultLeads}
+          `
+          svgToPNG(file.name, resultWaterOnly);
+        }
+      }
+      reader.onloadend = function (e) {
+        console.log('success');
+      }
+      reader.readAsBinaryString(file);
+    }
+
+  const dxfPreview = () => {
+    dxf.config.verbose = true
+    fileInput.addEventListener('change', function (event) {
+      const fileList = event.target.files;
+      for(let item in fileList) {
+        if(typeof(fileList[item]) == 'object') {
+          if(fileList[item].type == 'application/pdf') {
+            pdfPreview(fileList[item]);
+          } else if(fileList[item].type == 'image/jpg' || fileList[item].type == 'image/jpeg' || fileList[item].type == 'image/png') {
+            imgPreview(fileList[item]);
+          } else {
+            readDXFFile(fileList[item]);
+          }
+        }
+      }
+    })
+  }
+
+  const imgPreview = (imageFile) => {
+    const imgObj = document.createElement('img');
+    
+    imgObj.setAttribute('frameborder', 0);
+    imgObj.setAttribute('height', '100%');
+    imgObj.setAttribute('width', '100%');
+    imgObj.setAttribute('src', imageFile.path);
+
+    svgContainer.innerHTML += `
+              <p>${imageFile.name}</p>
+          `
+    svgContainer.appendChild(imgObj);
+  }
+
+  const pdfPreview = (pdfFile) => {
+    const iFrame = document.createElement('iframe');
+    
+    iFrame.setAttribute('frameborder', 0);
+    iFrame.setAttribute('height', '100%');
+    iFrame.setAttribute('width', '100%');
+    iFrame.setAttribute('src', pdfFile.path);
+
+    svgContainer.innerHTML += `
+              <p>${pdfFile.name}</p>
+          `
+    svgContainer.appendChild(iFrame);
+  }
+
+  dxfPreview();
+
+  const previewProjectCreate = () => {
+    const previewClient = document.querySelector('.preview-client-name');
+    const formClient = document.querySelector('#client_name');
+    const previewProjectName = document.querySelector(".preview-project-name");
+    const formProjectName = document.querySelector('#project_name');
+    const previewMaterial = document.querySelector(".preview-project-material");
+    const formMaterial = document.querySelector('#material');
+    const previewThickness = document.querySelector(".preview-project-thickness");
+    const formThickness = document.querySelector('#thickness');
+    const previewUnit = document.querySelector(".preview-project-unit");
+    const formUnit = document.querySelector('#unit');
+    const previewQuantity = document.querySelector(".preview-project-quantity");
+    const formQuantity = document.querySelector('#quantity');
+    const previewComments = document.querySelector(".preview-project-comments");
+    const formComments = document.querySelector('#comments');
+    const previewFiles = document.querySelector(".preview-project-fileList");
+
+    formClient.addEventListener('keyup', (ev) => {
+      const fieldVal = ev.target.value;
+      previewClient.textContent = fieldVal;
+    });
+
+    formProjectName.addEventListener('keyup', (ev) => {
+      const fieldVal = ev.target.value;
+      previewProjectName.textContent = fieldVal;
+    });
+
+    formMaterial.addEventListener('keyup', (ev) => {
+      const fieldVal = ev.target.value;
+      previewMaterial.textContent = fieldVal;
+    });
+
+    formThickness.addEventListener('keyup', (ev) => {
+      const fieldVal = ev.target.value;
+      previewThickness.textContent = fieldVal;
+    });
+
+    formUnit.addEventListener('keyup', (ev) => {
+      const fieldVal = ev.target.value;
+      previewUnit.textContent = fieldVal;
+    });
+
+    formQuantity.addEventListener('keyup', (ev) => {
+      const fieldVal = ev.target.value;
+      previewQuantity.textContent = fieldVal;
+    });
+
+    formComments.addEventListener('keyup', (ev) => {
+      const fieldVal = ev.target.value;
+      previewComments.textContent = fieldVal;
+    });
+  }
+
+  previewProjectCreate();
+
+  const svgToPNG = (fileName, inlineSvg) => {
+    const fs = window.require('fs');
+    const path = window.require('path');
+    const encoding = window.require('encoding');
+
+    //const { convert } = window.require('convert-svg-to-png');
+    const express = window.require('express');
+
+    // const app = express();
+
+    // app.post('/convert', async(req, res) => {
+    //   const png = await convert(req.body);
+
+    //   res.set('Content-Type', 'image/png');
+    //   res.send(png);
+
+    //   console.log(png);
+    // });
+
+    //const { convertFile}  = require('convert-svg-to-png');
+    //const fileBlob = new Blob([imgURI], {type: 'image/png'});
+
+
+
+    //app.listen(3000);
+
+    var btn = document.querySelector('button.svg-to-png');
+    var svg = document.querySelector('svg');
+    var canvas = document.querySelector('canvas');
+
+    function triggerDownload (imgURI) {
+      var evt = new MouseEvent('click', {
+        view: window,
+        bubbles: false,
+        cancelable: true
+      });
+
+      const svgString = inlineSvg.toString();
+      // const { convertFile}  = window.require('convert-svg-to-png');
+
+      const fileNameLessExtension = fileName.split('.dxf').join('');
+      // const resultBuffer = encoding.convert(imgURI, 'utf8');
+      // const resultBufferSVG = encoding.convert(svgString, 'utf8');
+
+      // const fileBlobSVG = new Blob([resultBufferSVG], {type: 'image/svg'});
+
+      // console.log(resultBuffer);
+      // console.log(resultBufferSVG.buffer);
+
+      // (async() => {
+      // const inputFilePath = fileBlobSVG;
+      // const outputFilePath = await convertFile(inputFilePath);
+
+      // console.log(outputFilePath);
+      // //=> "/path/to/my-image.png"
+      // })();
+
+      // console.log(typeof(svg));
+      // console.log(typeof(JSON.stringify(svg)));
+
+      // const fileBlob = new Blob([imgURI], {type: 'image/png'});
+
+      // const pngData = URL.createObjectURL(fileBlob);
+
+      // console.log(pngData);
+
+      // var a = document.createElement('a');
+      // a.setAttribute('download', fileNameLessExtension + '.png');
+      // a.setAttribute('href', imgURI);
+      // a.setAttribute('target', '_blank');
+
+      // const file = new File([imgURI], fileNameLessExtension + '.jpg', {type: 'image/png'});
+
+      // console.log(imgURI);
+      // console.log(file);
+
+      // console.log(svgString);
+      const svgObj = {
+        'name': fileNameLessExtension + '.svg',
+        'svg': svgString
+      }
+
+      selFiles.push(svgObj);
+
+      // try {
+      //   fs.writeFileSync(path.join('X:\\waterjetDashboard\\_temp\\svg\\', fileNameLessExtension + '!!!!!!!!!!.svg'), svgString, 'utf8')
+      // } catch (err) {
+      //   console.log(err);
+      // }
+
+      // try {
+      //   fs.writeFile(path.join('X:\\waterjetDashboard\\_temp\\png\\', fileNameLessExtension + '!!!.png'), file, function(err) {
+      //     console.log(err);
+      //   });
+      //   console.log('file writttttenNEWPROJECT');
+      // }
+      // catch (err) {
+      //   console.log(err);
+      // }
+
+      // try {
+      //   fs.copyFileSync(pngData, path.join('X:\\waterjetDashboard\\_temp\\png\\', fileNameLessExtension + '!!!.png'));
+      //   // , fs.constants.COPYFILE_EXCL);      
+      //   // // Get the current filenames
+      //   // // after the function
+      //   // getCurrentFilenames();
+      //   // console.log("\nFile Contents of world.txt:",
+      //   //   fs.readFileSync("hello.txt", "utf8"));
+      //   console.log('else statement');
+      // }
+      // catch (err) {
+      //   console.log(err);
+      // }
+
+      // const dataUriToBlob = (dataURI) => {
+      //   // convert base64 to raw binary data held in a string
+      //   // doesn't handle URLEncoded DataURIs - see SO answer #6850276 for code that does this
+      //   var byteString = atob(dataURI.split(',')[1]);
+
+      //   // separate out the mime component
+      //   var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0]
+
+      //   // write the bytes of the string to an ArrayBuffer
+      //   var ab = new ArrayBuffer(byteString.length);
+
+      //   // create a view into the buffer
+      //   var ia = new Uint8Array(ab);
+
+      //   // set the bytes of the buffer to the correct values
+      //   for (var i = 0; i < byteString.length; i++) {
+      //       ia[i] = byteString.charCodeAt(i);
+      //   }
+
+      //   // write the ArrayBuffer to a blob, and you're done
+      //   var blob = new Blob([ab], {type: mimeString});
+      //   return blob;
+
+      // }
+
+      // const blobb = dataUriToBlob(imgURI);
+
+      // console.log(blobb);
+
+      // var blob = new Blob([imgURI], {type: 'image/png'});
+      // const file = new File([blobb], fileNameLessExtension + '.png', {type: 'image/png'});
+
+      // selFiles.push(file);
+
+      // console.log(file);
+      
+      // if (window.navigator.msSaveOrOpenBlob) {
+      //     window.navigator.msSaveOrOpenBlob(file, fileNameLessExtension);
+      //     console.log('saveddd');
+      // }
+
+      //a.click();
+
+      //a.dispatchEvent(evt);
+    }
+
+    btn.addEventListener('click', function () {
+      console.log('clickckced');
+      var canvas = document.getElementById('canvas');
+      var ctx = canvas.getContext('2d');
+      var data = (new XMLSerializer()).serializeToString(svg);
+      var DOMURL = window.URL || window.webkitURL || window;
+
+      var img = new Image();
+      var svgBlob = new Blob([data], {type: 'image/svg+xml;charset=utf-8'});
+      var url = DOMURL.createObjectURL(svgBlob);
+
+      img.onload = function () {
+        ctx.drawImage(img, 0, 0);
+        DOMURL.revokeObjectURL(url);
+
+        var imgURIPNG = canvas
+            .toDataURL('image/png')
+
+        var imgURI = canvas
+            .toDataURL('image/png')
+            .replace('image/png', 'image/octet-stream');
+
+        triggerDownload(imgURIPNG);
+      };
+
+      img.src = url;
+    });
+  }
+</script>
+
+    <script src="./utils.js" type="module"></script>
+    <script src="./renderer.js"></script>
+  </body>
+</html>
