@@ -1,63 +1,228 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8">
-    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
-    <!--<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">-->
-    <meta http-equiv="Content-Security-Policy" content="style-src 'self' 'unsafe-inline';">
-    <link href="./styles.css" rel="stylesheet">
+    <meta charset="UTF-8" />
     <title>Hello World!</title>
+    <link rel="stylesheet" href="../../css/globals.css" />
+    <link rel="stylesheet" href="./index.css" />
   </head>
   <body>
-    <div id="window-container">
-      <nav>
-        <div id="nav-container">
-          <a href="./index.html"><button class="active">Home</button></a>
-          <a href="./newProject.html"><button>New Project</button></a>
-          <a href="./pending.html"><button>Pending</button></a>
-          <a href="./inProgress.html"><button>In Progress</button></a>
-          <a href="./completed.html"><button>Completed</button></a>
-          <a href="./archived.html"><button>Archived</button></a>
-          <a href="./onHold.html"><button>On Hold</button></a>
-          <a href="./settings.html"><button class="sit-bottom">Settings</button></a>
-        </div>
+    <main>
+      <nav id="nav-menu">
+        <button class="goToPage menu-item" data-href="../home/index.html">Home</button>
+        <button class="goToPage menu-item active" data-href="../newProject/index.html">New Project</button>
+        <button class="goToPage menu-item" data-href="../pending/index.html">Pending</button>
+        <button class="goToPage menu-item" data-href="../inProgress/index.html">In Progress</button>
+        <button class="goToPage menu-item" data-href="../completed/index.html">Completed</button>
+        <button class="goToPage menu-item" data-href="../archived/index.html">Archived</button>
+        <button class="goToPage menu-item" data-href="../settings/index.html">Settings</button>
       </nav>
-      <div id="content-container">
-        <h1>Hello World!</h1>
-        <div w3-include-html="modalWindow.html"></div>
-        We are using Node.js <span id="node-version"></span>,
-        Chromium <span id="chrome-version"></span>,
-        and Electron <span id="electron-version"></span>.
-        <a href="./completed.html"><button>Completed</button></a>
-      </div>
-    </div>
+      <section class="content">
+        <h1>💖 Hello World!!</h1>
+        <p class="fileData"></p>
+        <p>Welcome to New Project</p>
+        <button class="getFile">Get File</button>
+        <!-- <form>
+          <input type="text" name="client-name" id="client-name" placeholder="Client Name" />
+          <input type="text" name="project-name" id="project-name" placeholder="Project Name" />
+          <input type="text" name="material" id="material" placeholder="Material" />
+          <input type="text" name="thickness" id="thickness" placeholder="Thickness" />
+          <input type="text" name="quantity" id="quantity" placeholder="Quantity" />
+          <input type="text" name="comments" id="comments" placeholder="Comments" />
+          <input type="text" name="date" id="date" placeholder="Date" />
+          <input type="text" name="status" id="status" placeholder="Status" />
+          <input type="text" name="priority" id="priority" placeholder="Priority" />
+          <input type="text" name="project-files" id="project-files" placeholder="Project Files" />
+          <input type="submit" value="Review" />
+        </form>
+        <button class="submit-project">Submit Project</button> -->
+        <div class="project-form">
+          <form id="page-form">
+              <label for="client_name">Client Name</label>
+              <select id="client_name" name="client_name" required>
+                <option>Rivian</option>
+              </select>
+              <button id="add_client">+</button>
 
-    <!-- You can also require other files to run in this process -->
-    <!-- <script src="./db-utils.js" type="module"></script> -->
-    <!-- <script src="./utils.js" type="module"></script> -->
-    <script src="./renderer.js"></script>
-    <script src="./bundle.js"></script>
-    <script src="./htmlSnippetInclude.js" type="module" content="script-src 'sha256-1Og1oOsSrIKsXSMP9xXxKdyZ/SDv6ngLsybsGxc8IGE='"></script>
-    <script src="./db-utils.js" type="module" content="script-src 'sha256-1Og1oOsSrIKsXSMP9xXxKdyZ/SDv6ngLsybsGxc8IGE='"></script>
+              <label for="project_name">Project Name</label>
+              <input id="project_name" name="project_name" required value=""/>
+
+              <label for="material">Material</label>
+              <select id="material" name="material" required>
+                <option type="text" value="aluminum">Aluminum</option>
+                <option type="text" value="mild steel">Mild Steel</option>
+                <option type="text" value="stainless steel">Stainless Steel</option>
+                <option type="text" value="pvc foam">PVC Foam</option>
+                <option type="text" value="delrin">Delrin</option>
+                <option type="text" value="neoprene rubber">Neoprene Rubber</option>
+                <option type="text" value="neoprene rubber">Neoprene Rubber</option>
+              </select>
+
+              <label for="thickness">Thickness</label>
+              <input id="thickness" name="thickness" type="number" value="" required />
+
+              <label for="unit">Unit</label>
+              <select id="unit" name="unit">
+                <option type="text" value="inch">inch</option>
+                <option type="text" value="mm">mm</option>
+                <option type="text" value="gauge">gauge</option>
+              </select>
+
+              <label for="quantity">Quantity</label>
+              <input id="quantity" name="quantity" type="number" value="" required />
+
+              <label for="comments">Comments</label>
+              <textarea id="comments" name="comments" type="text" value=""></textarea>
+
+              <label for="files">Files</label>
+              <input type="file" id="files" name="files" multiple value=""/>
+              <div>Number of entities:<span id="numberOfEntities">-</span></div>
+
+              
+              <label for="multi-procedure">Multi-Procedure Project</label>
+              <input type="checkbox" id="multi-procedure" name="multi-procedure" value=""/>
+              <div class="multi-procedure-form hidden" style="margin-left: 0.5em">
+                <input type="checkbox" id="step-water-jet" name="step-water-jet" value=""/>
+                <label for="step-water-jet">Water Jet</label>
+                <br/>
+                <input type="checkbox" id="step-forming" name="step-forming" value=""/>
+                <label for="step-forming">Forming</label>
+                <br/>
+                <input type="checkbox" id="step-machining" name="step-machining" value=""/>
+                <label for="step-machining">Machining</label>
+                <br/>
+                <input type="checkbox" id="step-other" name="step-other" value=""/>
+                <label for="step-other">Other</label>
+                <br/>
+              </div>
+
+              <button class="review-project">Review Project</button>
+
+              <button class="submit-project">Submit Project</button>
+          </form>
+        </div>
+      </section>
+    </main>
     <script type="module">
-      import * as dbStuff from './db-utils.js';
-      import * as includeHTML from './htmlSnippetInclude.js';
 
-      includeHTML.includeHTML();
-      includeHTML.modalWindow();
-    
-      // const electron = window.require('electron');
-      // const { shell, ipcMain } = electron;
+      import { getDBFile, writeToFile } from '../../js/api.js';
+      import * as fileHandler from '../../js/fileHandler.js';
+      import * as pageUtils from '../../js/utils.js';
+      import * as dbUtils from '../../js/db-utils.js';
 
-      const statuses = ['pending', 'inProgress', 'completed', 'archived', 'onhold'];
+      pageUtils.menuNavigation();
+      pageUtils.pageChangeFade();
 
-      const dbPromise = new Promise((resolve, reject) => {
-        statuses.forEach((status, index) => {
-          const dbread = dbStuff.dbStuff('read', null, status);
-          //const dbread = dbStuff.showProjects('inProgress');
-          resolve(dbread);
-        })
+      fileHandler.getDBFileAddToLocal('pending');
+      fileHandler.watchDBFile('pending');
+
+      const getFile = document.querySelector('.getFile');
+      const fileDataP = document.querySelector('.fileData');
+      const theForm = document.querySelector('form');
+      const reviewProject = document.querySelector('.review-project');
+      const submitProject = document.querySelector('.submit-project');
+
+      window.api.dbInteraction('connect');
+
+      // theForm.addEventListener('submit', (ev) => {
+      //   ev.preventDefault();
+      //   const inputs = theForm.querySelectorAll('input');
+      //   const selects = theForm.querySelectorAll('select');
+      //   const projectData = {};
+      //   let projectID;
+
+      //   inputs.forEach((input) => {
+      //     projectData[input.name] = input.value;
+      //   });
+
+      //   selects.forEach((select) => {
+      //     console.log(select.value);
+      //     projectData[select.name] = select.value;
+      //   });
+
+      //   console.log('hhkhkjkl;lk');
+
+      //   projectData['status'] = 'pending';
+
+      //   projectData['id'] = (new Date().getTime()) + projectData['project_name'].replaceAll(' ', '');
+
+      //   window.localStorage.setItem('pendingProjectData', JSON.stringify(projectData));
+
+      //   console.log('data written to local storage');
+      // });
+
+      theForm.addEventListener('submit', (ev) => {
+        ev.preventDefault();
+
       });
+
+      reviewProject.addEventListener('click', () => {
+        //theForm.submit();
+        const inputs = theForm.querySelectorAll('input');
+        const selects = theForm.querySelectorAll('select');
+        const textareaValue = theForm.querySelector('textarea').value;
+        const projectData = {};
+        let projectID;
+        const date = new Date();
+        const dateString = date.toDateString();
+        const timeString = date.toTimeString();
+
+        inputs.forEach((input) => {
+          if (input.type == 'checkbox') {
+            console.log('checkbox');
+          } else {
+            projectData[input.name] = input.value;
+          }
+        });
+
+        selects.forEach((select) => {
+          console.log(select.value);
+          projectData[select.name] = select.value;
+        });
+
+        projectData['comments'] = textareaValue;
+        projectData['cut_time'] = 0;
+        projectData['labor_time'] = 0;
+        projectData['date'] = dateString + ' @ ' + timeString;
+        projectData['procedures'] = 'blank';
+
+        console.log('hhkhkjkl;lk');
+
+        projectData['status'] = 'pending';
+
+        projectData['uniqueID'] = (new Date().getTime()) + projectData['project_name'].replaceAll(' ', '');
+
+        window.localStorage.setItem('pendingProjectData', JSON.stringify(projectData));
+
+        console.log(projectData);
+
+        console.log('data written to local storage');
+      })
+
+      submitProject.addEventListener('click', () => {
+        const pendingProjectData = window.localStorage.getItem('pendingProjectData');
+        fileHandler.addProjectToLocal(JSON.parse(pendingProjectData));
+        
+        //writeToFile(pendingProjectData, 'pending');
+        console.log(pendingProjectData);
+
+        window.localStorage.removeItem('pendingProjectData');
+
+        theForm.reset();
+
+        console.log('data written to file');
+
+        dbUtils.dbInteractionCall('create', pendingProjectData);
+
+        console.log('data written to db');
+      });
+
+      window.api.onFileResponse((data) => {
+        console.log(data); // prints the content of data.json
+        //fileDataP.innerHTML = data;
+        fileDataP.innerHTML = data
+      });
+
     </script>
   </body>
 </html>
